@@ -1,0 +1,45 @@
+/* Add this CSS to your component or global styles */
+.guest-link {
+  transition: all 0.3s ease; /* Smooth transition */
+}
+
+.guest-link:hover {
+  color: #007bff; /* Change text color to blue on hover */
+  text-decoration: underline; /* Add underline on hover */
+}
+
+/* Basic styling for the pagination items */
+.pagination-item-custom {
+  background-color: #f8f9fa; /* Light background */
+  color: #495057; /* Text color */
+  font-weight: 500; /* Slightly bolder text */
+  transition: all 0.3s ease; /* Smooth transition for hover and active states */
+}
+
+.pagination-item-custom:hover {
+  background-color: #28a745; /* Green background on hover */
+  color: #ffffff; /* White text on hover */
+  cursor: pointer; /* Pointer cursor to indicate it's clickable */
+}
+
+.pagination-item-custom.active-custom {
+  background-color: #28a745; /* Active page with green background */
+  color: #ffffff; /* White text for active page */
+  border: none; /* Remove border to maintain the look */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Soft shadow around active page */
+}
+
+.pagination-item-custom:focus {
+  outline: none; /* Remove the default focus outline */
+}
+
+.pagination-item-custom:not(.active-custom) {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for inactive items */
+}
+
+/* Responsive design to ensure pagination looks good on all devices */
+@media (max-width: 768px) {
+  .pagination-item-custom {
+    font-size: 14px; /* Slightly smaller font on mobile */
+  }
+}
