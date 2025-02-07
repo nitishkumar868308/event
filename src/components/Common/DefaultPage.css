@@ -10,40 +10,46 @@
     left: 0;
     width: 100%;
     z-index: 100;
-}
-
-.navbar-left h2 {
+  }
+  
+  .navbar-left h2 {
     font-size: 18px;
     color: white;
     text-align: center;
-}
-
-.navbar-right {
+  }
+  
+  .navbar-right {
     display: flex;
     align-items: center;
-}
-
-.navbar-profile { 
+  }
+  
+  .navbar-profile {
     display: flex;
     align-items: center;
     cursor: pointer;
     position: relative;
-}
-
-.navbar-profile-img { 
+  }
+  
+  .navbar-profile-initials {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    background-color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
     margin-right: 10px;
-    object-fit: cover;
-}
-
-.navbar-profile-name { 
+    font-size: 18px;
+  }
+  
+  .navbar-profile-name {
     font-size: 16px;
     color: white;
-}
-
-.dropdown-menu {
+  }
+  
+  .dropdown-menu {
     position: absolute;
     top: 50px;
     right: 0;
@@ -56,7 +62,7 @@
   }
   
   .dropdown-menu.show {
-    display: block; 
+    display: block;
   }
   
   .dropdown-item {
@@ -75,5 +81,9 @@
   .dropdown-item i {
     margin-right: 10px;
   }
-  
+
+  .content {
+  margin-top: 20px; /* Add enough space to push content below the fixed navbar */
+  padding: 20px; /* Optional: padding to add space inside content */
+}
   

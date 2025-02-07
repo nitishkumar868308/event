@@ -167,7 +167,7 @@ const EventDashboard = () => {
   };
 
   return (
-    <DefaultPage>
+    <>
       {/* Add Event Button (Top Right) */}
       <Button
         variant="success"
@@ -341,7 +341,7 @@ const EventDashboard = () => {
           </Modal.Body>
         </Modal>
       </Container>
-    </DefaultPage>
+    </>
   );
 };
 
