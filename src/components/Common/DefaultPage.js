@@ -1,18 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { FaUser, FaSignOutAlt } from "react-icons/fa"; // Import icons from react-icons
+import { useNavigate } from "react-router-dom"; // For redirecting after logout
+import { FaSignOutAlt } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux"; // For accessing Redux state
+import { fetchUserData, logoutUser } from "../../redux/auth/authSlice"; // Import actions
 import "./DefaultPage.css";
 
 const DefaultPage = ({ children }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate(); // For navigating after logout
+  const { user, loading, error } = useSelector((state) => state.auth); // Get user data from Redux state
+
+  // Fetch user data when component mounts
+  useEffect(() => {
+    if (!user) {
+      dispatch(fetchUserData()); // If no user data exists, fetch it
+    }
+  }, [dispatch, user]);
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
   };
 
-  const userName = "Nitish Kumar";
+  // Handle logout
+  const handleLogout = () => {
+    dispatch(logoutUser()); // Dispatch logout action
+    navigate("/"); // Redirect to login page
+  };
+
+  // If user exists, get the name from the user data
+  const userName = user ? user.name : "Guest"; // Default to "Guest" if no user is found
   const initials = userName
     .split(" ")
     .map((name) => name[0])
@@ -56,13 +75,9 @@ const DefaultPage = ({ children }) => {
             className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}
             ref={dropdownRef}
           >
-            <Link to="/" className="dropdown-item">
-              <FaUser style={{ marginRight: "10px" }} /> Profile
-            </Link>
-
-            <Link to="/" className="dropdown-item">
+            <div className="dropdown-item" onClick={handleLogout}>
               <FaSignOutAlt style={{ marginRight: "10px" }} /> Logout
-            </Link>
+            </div>
           </div>
         </div>
       </div>

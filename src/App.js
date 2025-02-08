@@ -1,13 +1,13 @@
-// src/App.js
-import React from 'react';
-import { AuthProvider } from './context/AuthContext';
-import AppRoutes from './routes/Routes';
+import React from "react";
+import { Provider } from "react-redux"; // Import the Provider
+import store from "./redux/store"; // Import the store
+import AppRoutes from "./routes/Routes";
 
 function App() {
   return (
-    <AuthProvider>
+    <Provider store={store}>
       <AppRoutes />
-    </AuthProvider>
+    </Provider>
   );
 }
 

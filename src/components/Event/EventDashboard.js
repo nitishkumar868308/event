@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Row,
@@ -6,260 +6,279 @@ import {
   Card,
   Button,
   Form,
-  DropdownButton,
-  Dropdown,
   Modal,
   Pagination,
 } from "react-bootstrap";
-import { FaPlusCircle } from "react-icons/fa"; // For the "Add Event" icon
-import DefaultPage from "../Common/DefaultPage";
+import { FaPlusCircle, FaEdit, FaTrash } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { ClipLoader } from "react-spinners";
+import {
+  fetchEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from "../../redux/events/eventSlice";
+import { fetchUserData } from "../../redux/auth/authSlice";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import io from "socket.io-client";
+import axios from "axios";
 
 const EventDashboard = () => {
-  // Dummy data for events (with initial attendee count)
-  const initialEvents = [
-    {
-      id: 1,
-      name: "Music Concert",
-      category: "Music",
-      date: "2025-05-12",
-      description: "A great music concert with popular bands.",
-      attendees: 120, // Initial number of attendees
-    },
-    {
-      id: 2,
-      name: "Football Match",
-      category: "Sports",
-      date: "2025-02-10",
-      description: "An exciting football match between top teams.",
-      attendees: 50,
-    },
-    {
-      id: 3,
-      name: "Art Exhibition",
-      category: "Art",
-      date: "2025-04-20",
-      description: "A stunning art exhibition featuring modern artists.",
-      attendees: 30,
-    },
-    {
-      id: 4,
-      name: "Tech Conference",
-      category: "Technology",
-      date: "2025-03-15",
-      description:
-        "The latest trends in technology discussed by industry experts.",
-      attendees: 75,
-    },
-    {
-      id: 5,
-      name: "Jazz Night",
-      category: "Music",
-      date: "2025-06-05",
-      description: "A night filled with smooth jazz and talented musicians.",
-      attendees: 95,
-    },
-    {
-      id: 6,
-      name: "Coding Bootcamp",
-      category: "Technology",
-      date: "2025-07-18",
-      description: "A 3-day bootcamp on full-stack development.",
-      attendees: 110,
-    },
-    {
-      id: 7,
-      name: "Yoga Retreat",
-      category: "Health",
-      date: "2025-08-12",
-      description: "A rejuvenating retreat to relax and unwind.",
-      attendees: 45,
-    },
-    {
-      id: 8,
-      name: "Dance Competition",
-      category: "Art",
-      date: "2025-09-01",
-      description: "A thrilling competition for dance enthusiasts.",
-      attendees: 80,
-    },
-  ];
-
-  // State for events, filter, and form inputs
-  const [events, setEvents] = useState(initialEvents);
+  const dispatch = useDispatch();
+  const { events, isLoading } = useSelector((state) => state.events); // Fetch events and loading state from redux
+  const { user } = useSelector((state) => state.auth);
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("upcoming");
-
-  // State for Event Creation Form
+  const [dateFilter, setDateFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
     name: "",
     description: "",
     category: "",
     date: "",
   });
-
-  // Pagination State
+  const [editEvent, setEditEvent] = useState(null);
+  const [eventToDelete, setEventToDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const socket = io("http://localhost:5000");
+  console.log("events" , events)
   const eventsPerPage = 6;
 
-  // Calculate the events to display based on the current page
-  const indexOfLastEvent = currentPage * eventsPerPage;
-  const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
-  const currentEvents = events.slice(indexOfFirstEvent, indexOfLastEvent);
+  const today = new Date().setHours(0, 0, 0, 0); // Get today's date at 00:00:00 (midnight)
 
-  // Filter events based on selected category and date
-  const filteredEvents = currentEvents.filter((event) => {
-    const isCategoryMatch = categoryFilter
+  const filteredEvents = events.filter((event) => {
+    const matchesCategory = categoryFilter
       ? event.category === categoryFilter
-      : true;
-    const isDateMatch =
-      dateFilter === "upcoming"
-        ? new Date(event.date) >= new Date()
-        : new Date(event.date) < new Date();
+      : true; // If no category filter, show all categories
 
-    return isCategoryMatch && isDateMatch;
+    const eventDate = new Date(event.date).setHours(0, 0, 0, 0); // Strip the time from event date
+
+    const matchesDate =
+      dateFilter === "upcoming"
+        ? eventDate >= today // Include today and future events in "upcoming"
+        : dateFilter === "past"
+        ? eventDate < today // Exclude today, include past events
+        : true; // If no date filter, show all events (both past and upcoming)
+
+    return matchesCategory && matchesDate;
   });
 
-  // Handle form changes
+  useEffect(() => {
+    setCurrentPage(1); // Reset to the first page when filters change
+  }, [categoryFilter, dateFilter]);
+
+  // Paginate the filtered events
+  const indexOfLastEvent = currentPage * eventsPerPage;
+  const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
+  const currentEvents = filteredEvents.slice(
+    indexOfFirstEvent,
+    indexOfLastEvent
+  );
+
+  // Pagination logic
+  const pageNumbers = [];
+  for (let i = 1; i <= Math.ceil(filteredEvents.length / eventsPerPage); i++) {
+    pageNumbers.push(i);
+  }
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Fetch user data and events initially
+  useEffect(() => {
+    dispatch(fetchUserData());
+    dispatch(fetchEvents());
+  }, [dispatch]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewEvent({ ...newEvent, [name]: value });
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Add the new event to the list
-    setEvents([
-      ...events,
-      {
-        id: events.length + 1,
-        ...newEvent,
-        date: new Date(newEvent.date).toISOString(),
-        attendees: 0, // New event starts with 0 attendees
-      },
-    ]);
-
-    // Close modal and reset form
-    setShowModal(false);
-    setNewEvent({ name: "", description: "", category: "", date: "" });
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditEvent({ ...editEvent, [name]: value });
   };
 
-  // Pagination: Handle page change
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(createEvent(newEvent)).then(() => {
+      setShowModal(false);
+      setNewEvent({ name: "", description: "", category: "", date: "" });
+      dispatch(fetchEvents());
+      setCurrentPage(1);
+    });
+  };
 
-  // Total number of pages
-  const pageNumbers = [];
-  for (let i = 1; i <= Math.ceil(events.length / eventsPerPage); i++) {
-    pageNumbers.push(i);
-  }
-
-  // Handle join event (increase attendees count)
-  const handleJoinEvent = (eventId) => {
-    setEvents(
-      events.map((event) =>
-        event.id === eventId
-          ? { ...event, attendees: event.attendees + 1 }
-          : event
-      )
+  const handleUpdateEvent = (e) => {
+    e.preventDefault();
+    dispatch(updateEvent({ id: editEvent._id, eventData: editEvent })).then(
+      () => {
+        dispatch(fetchEvents());
+        setShowModal(false);
+      }
     );
+  };
+
+  const handleDeleteEvent = () => {
+    dispatch(deleteEvent(eventToDelete)).then(() => {
+      toast.success("Delete Successful!");
+      dispatch(fetchEvents());
+      setShowDeleteModal(false); // Close delete modal after deleting
+    });
+  };
+
+  useEffect(() => {
+    socket.on("eventUpdated", (updatedEvent) => {
+      console.log("Event updated:", updatedEvent);
+
+      // Update Redux store with the new event data
+      dispatch(updateEvent({ id: updatedEvent._id, eventData: updatedEvent }));
+
+      // Alternatively, you can update local state if not using Redux for events:
+      // setEvent(updatedEvent);
+    });
+
+    // Clean up the socket listener
+    return () => {
+      socket.off("eventUpdated");
+    };
+  }, [dispatch]);
+
+  const handleJoinEvent = async (eventId) => {
+    const response = await fetch(
+      `https://event-backends.onrender.com/api/events/${eventId}/join`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
+    if (response.ok) {
+      console.log("Event joined successfully!");
+    } else {
+      console.log("Failed to join the event");
+    }
+  };
+
+  const openDeleteModal = (eventId) => {
+    setEventToDelete(eventId);
+    setShowDeleteModal(true);
   };
 
   return (
     <>
-      {/* Add Event Button (Top Right) */}
+      <ToastContainer />
       <Button
         variant="success"
-        onClick={() => setShowModal(true)}
+        onClick={() => {
+          setShowModal(true);
+          setEditEvent(null); // Reset the edit event when creating a new event
+        }}
         className="ms-auto d-block"
       >
         <FaPlusCircle className="me-2" /> Add Event
       </Button>
-
       <Container className="mt-5">
         <Row>
-          {/* Filters Section */}
-          <Col md={3} className="mb-4 mb-md-0">
-            <Card className="p-3 shadow-sm">
-              <Card.Title>Filters</Card.Title>
-
-              {/* Category Filter */}
-              <Form.Group className="mb-3">
-                <Form.Label>Category</Form.Label>
-                <DropdownButton
-                  variant="secondary"
-                  title={categoryFilter || "Select Category"}
-                  onSelect={(e) => setCategoryFilter(e)}
-                >
-                  <Dropdown.Item eventKey="">All</Dropdown.Item>
-                  <Dropdown.Item eventKey="Music">Music</Dropdown.Item>
-                  <Dropdown.Item eventKey="Sports">Sports</Dropdown.Item>
-                  <Dropdown.Item eventKey="Art">Art</Dropdown.Item>
-                  <Dropdown.Item eventKey="Technology">
-                    Technology
-                  </Dropdown.Item>
-                </DropdownButton>
-              </Form.Group>
-
-              {/* Date Filter */}
-              <Form.Group className="mb-3">
-                <Form.Label>Date</Form.Label>
-                <DropdownButton
-                  variant="secondary"
-                  title={
-                    dateFilter === "upcoming"
-                      ? "Upcoming Events"
-                      : "Past Events"
-                  }
-                  onSelect={(e) => setDateFilter(e)}
-                >
-                  <Dropdown.Item eventKey="upcoming">
-                    Upcoming Events
-                  </Dropdown.Item>
-                  <Dropdown.Item eventKey="past">Past Events</Dropdown.Item>
-                </DropdownButton>
-              </Form.Group>
-            </Card>
+          <Col md={3}>
+            {/* Filter */}
+            <Form.Group className="mb-3">
+              <Form.Label>Category Filter</Form.Label>
+              <Form.Control
+                as="select"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="Music">Music</option>
+                <option value="Sports">Sports</option>
+                <option value="Art">Art</option>
+                <option value="Technology">Technology</option>
+              </Form.Control>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Date Filter</Form.Label>
+              <Form.Control
+                as="select"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+              >
+                <option value="">Select Date Filter</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="past">Past</option>
+              </Form.Control>
+            </Form.Group>
           </Col>
-
-          {/* Event List Section */}
           <Col md={9}>
-            <Row>
-              {filteredEvents.length > 0 ? (
-                filteredEvents.map((event) => (
-                  <Col xs={12} md={6} lg={4} key={event.id}>
-                    <Card className="mb-4">
-                      <Card.Body>
-                        <Card.Title>{event.name}</Card.Title>
-                        <Card.Subtitle className="mb-2 text-muted">
-                          {event.category}
-                        </Card.Subtitle>
-                        <Card.Text>{event.description}</Card.Text>
-                        <Card.Text className="text-muted">
-                          Date: {new Date(event.date).toLocaleDateString()}
-                        </Card.Text>
-                        <Card.Text>
-                          <strong>Attendees: {event.attendees}</strong>
-                        </Card.Text>
-                        <Button
-                          variant="primary"
-                          onClick={() => handleJoinEvent(event.id)}
-                        >
-                          Join Event
-                        </Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                ))
-              ) : (
-                <Col xs={12}>
-                  <p>No events found for the selected filters.</p>
-                </Col>
-              )}
-            </Row>
+            {isLoading ? ( // Show loader while fetching data
+              <div className="d-flex justify-content-center mt-5">
+                <ClipLoader size={50} color="#00bfff" loading={isLoading} />
+              </div>
+            ) : (
+              <Row>
+                {currentEvents.length > 0 ? (
+                  currentEvents.map((event) => (
+                
+                    <Col
+                      xs={12}
+                      md={6}
+                      lg={4}
+                      key={event._id}
+                    >
+                      <Card className="mb-4">
+                        <Card.Body>
+                          <Card.Title>{event.name}</Card.Title>
+                          <Card.Subtitle className="mb-2 text-muted">
+                            {event.category}
+                          </Card.Subtitle>
+                          <Card.Text>{event.description}</Card.Text>
+                          <Card.Text className="text-muted">
+                            Date: {new Date(event.date).toLocaleDateString()}
+                          </Card.Text>
+                          <Card.Text>
+                            <strong>Attendees: {event.attendees.length}</strong>
+                          </Card.Text>
 
-            {/* Pagination */}
+                          <Button
+                            variant="primary"
+                            onClick={() => handleJoinEvent(event._id)}
+                          >
+                            Join Event
+                          </Button>
+                          {/* Conditionally render edit and delete buttons */}
+                          {event.userId === user.id && (
+                            <>
+                              <Button
+                                variant="warning"
+                                onClick={() => {
+                                  setEditEvent(event);
+                                  setShowModal(true);
+                                }}
+                                className="ms-2"
+                              >
+                                <FaEdit />
+                              </Button>
+                              <Button
+                                variant="danger"
+                                onClick={() => openDeleteModal(event._id)}
+                                className="ms-2"
+                              >
+                                <FaTrash />
+                              </Button>
+                            </>
+                          )}
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  ))
+                ) : (
+                  <Col xs={12}>
+                    <p>No events found for the selected filters.</p>
+                  </Col>
+                )}
+              </Row>
+            )}
             <Pagination className="justify-content-center">
               {pageNumbers.map((number) => (
                 <Pagination.Item
@@ -273,74 +292,94 @@ const EventDashboard = () => {
             </Pagination>
           </Col>
         </Row>
-
-        {/* Event Creation Modal */}
-        <Modal show={showModal} onHide={() => setShowModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Create New Event</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>Event Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Enter event name"
-                  name="name"
-                  value={newEvent.name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Description</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  placeholder="Enter event description"
-                  name="description"
-                  value={newEvent.description}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Category</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="category"
-                  value={newEvent.category}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Category</option>
-                  <option value="Music">Music</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Art">Art</option>
-                  <option value="Technology">Technology</option>
-                </Form.Control>
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="date"
-                  value={newEvent.date}
-                  onChange={handleInputChange}
-                  required
-                />
-              </Form.Group>
-
-              <Button variant="primary" type="submit">
-                Create Event
-              </Button>
-            </Form>
-          </Modal.Body>
-        </Modal>
       </Container>
+
+      {/* Create/Edit Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {editEvent ? "Edit Event" : "Create New Event"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={editEvent ? handleUpdateEvent : handleSubmit}>
+            <Form.Group className="mb-3">
+              <Form.Label>Event Name</Form.Label>
+              <Form.Control
+                type="text"
+                name="name"
+                value={editEvent ? editEvent.name : newEvent.name}
+                onChange={editEvent ? handleEditInputChange : handleInputChange}
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="description"
+                value={editEvent ? editEvent.description : newEvent.description}
+                onChange={editEvent ? handleEditInputChange : handleInputChange}
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Category</Form.Label>
+              <Form.Control
+                as="select"
+                name="category"
+                value={editEvent ? editEvent.category : newEvent.category}
+                onChange={editEvent ? handleEditInputChange : handleInputChange}
+                required
+              >
+                <option value="">Select Category</option>
+                <option value="Music">Music</option>
+                <option value="Sports">Sports</option>
+                <option value="Art">Art</option>
+                <option value="Technology">Technology</option>
+              </Form.Control>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Date</Form.Label>
+              <Form.Control
+                type="date"
+                name="date"
+                value={
+                  editEvent
+                    ? new Date(editEvent.date).toISOString().split("T")[0]
+                    : newEvent.date
+                }
+                onChange={editEvent ? handleEditInputChange : handleInputChange}
+                required
+              />
+            </Form.Group>
+            <div className="d-flex justify-content-end">
+              <Button variant="primary" type="submit">
+                {editEvent ? "Update Event" : "Create Event"}
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to delete this event?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteEvent}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };
