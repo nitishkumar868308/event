@@ -41,7 +41,7 @@ const EventDashboard = () => {
   const [editEvent, setEditEvent] = useState(null);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const socket = io("http://localhost:5000");
+  const socket = io("https://event-backends.onrender.com");
   console.log("events" , events)
   const eventsPerPage = 6;
 
