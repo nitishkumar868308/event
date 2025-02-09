@@ -71,6 +71,8 @@ export const setGuestUser = createAsyncThunk(
       id: "guest123",
       name: "Guest User",
       email: "guest@example.com",
+      role: "guest",
+      joinedEvents: 0,
     };
     return guestUser;
   }

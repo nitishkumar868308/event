@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux"; // Import useDispatch
-import { loginUser, registerUser , setGuestUser  } from "../../redux/auth/authSlice"; // Import actions
+import {
+  loginUser,
+  registerUser,
+  setGuestUser,
+} from "../../redux/auth/authSlice"; // Import actions
 import { Container, Row, Col, Form, Button, Card, Nav } from "react-bootstrap";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -12,6 +16,7 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  
 
   const validationSchema = Yup.object({
     name: Yup.string().test(
