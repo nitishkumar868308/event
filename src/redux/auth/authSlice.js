@@ -74,6 +74,9 @@ export const setGuestUser = createAsyncThunk(
       role: "guest",
       joinedEvents: 0,
     };
+
+    localStorage.setItem("user", JSON.stringify(guestUser));
+
     return guestUser;
   }
 );

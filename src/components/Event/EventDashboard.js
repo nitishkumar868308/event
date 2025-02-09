@@ -165,6 +165,18 @@ const EventDashboard = () => {
   //   }
   // };
 
+  // You can add this code inside your root component or useEffect for checking on app load
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("user");
+  
+  if (storedUser) {
+    const user = JSON.parse(storedUser); 
+    dispatch(setGuestUser(user)); 
+  }
+}, [dispatch]);
+
+
   const handleJoinEvent = async (eventId) => {
     // Check if the user is logged in and is a guest
     if (!user) {
@@ -202,8 +214,6 @@ const EventDashboard = () => {
     setShowDeleteModal(true);
   };
 
-  console.log("user", user);
-
   if (!user) {
     return (
       <div
@@ -227,8 +237,7 @@ const EventDashboard = () => {
   }
 
   const redirectToLogin = () => {
-    // Redirecting to the login page (adjust path as needed)
-    navigate("/"); // or use window.location.href if not using react-router
+    navigate("/"); 
   };
 
   return (

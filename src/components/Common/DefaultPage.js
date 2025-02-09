@@ -26,8 +26,9 @@ const DefaultPage = ({ children }) => {
 
   // Handle logout
   const handleLogout = () => {
-    dispatch(logoutUser()); // Dispatch logout action
-    navigate("/"); // Redirect to login page
+    localStorage.removeItem("user");
+    dispatch(logoutUser());
+    navigate("/");
   };
 
   // If user exists, get the name from the user data
