@@ -18,7 +18,7 @@ import {
   updateEvent,
   deleteEvent,
 } from "../../redux/events/eventSlice";
-import { fetchUserData , setGuestUser  } from "../../redux/auth/authSlice";
+import { fetchUserData, setGuestUser } from "../../redux/auth/authSlice";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import io from "socket.io-client";
@@ -45,7 +45,7 @@ const EventDashboard = () => {
   console.log("events", events);
   const eventsPerPage = 6;
   const [showLoginPopup, setShowLoginPopup] = useState(false); // Define the state for the login popup
-  const [showJoinLimitPopup, setShowJoinLimitPopup] = useState(false); 
+  const [showJoinLimitPopup, setShowJoinLimitPopup] = useState(false);
 
   const today = new Date().setHours(0, 0, 0, 0); // Get today's date at 00:00:00 (midnight)
 
@@ -170,26 +170,6 @@ const EventDashboard = () => {
       return;
     }
 
-    // For guest users, simulate joining events
-    if (user.role === "guest") {
-      // Check if the guest has already joined 2 events
-      if (user.joinedEvents >= 2) {
-        setShowJoinLimitPopup(true); // Show join limit popup for guests
-        return; // Prevent joining if the guest has reached the limit
-      }
-
-      // Simulate joining the event by incrementing the guest's joined events count
-      const updatedUser = { ...user, joinedEvents: user.joinedEvents + 1 };
-      dispatch(setGuestUser(updatedUser)); // Update the guest user state in Redux
-
-      // Show a success message
-      toast.success("Successfully joined the event!");
-      console.log("Event joined successfully for guest!");
-
-      return;
-    }
-
-    // For non-guest users, make the normal API call to join the event
     try {
       const response = await fetch(
         `https://event-backends.onrender.com/api/events/${eventId}/join`,
@@ -450,10 +430,26 @@ const EventDashboard = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Guest Modal */}
+      <Modal show={showLoginPopup} onHide={() => setShowLoginPopup(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Login Required</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>You must log in to join an event.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowLoginPopup(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={() => {}}>
+            Log In
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };
 
 export default EventDashboard;
-
-
