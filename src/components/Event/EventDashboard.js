@@ -22,8 +22,10 @@ import { fetchUserData, setGuestUser } from "../../redux/auth/authSlice";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import io from "socket.io-client";
+import { useHistory } from "react-router-dom";
 
 const EventDashboard = () => {
+  const history = useHistory();
   const dispatch = useDispatch();
   const { events, isLoading } = useSelector((state) => state.events); // Fetch events and loading state from redux
   const { user } = useSelector((state) => state.auth);
@@ -170,6 +172,11 @@ const EventDashboard = () => {
       return;
     }
 
+    if (showLoginPopup) {
+      console.log("Login modal is open, preventing API call.");
+      return; // Don't call the API if the login modal is open
+    }
+
     try {
       const response = await fetch(
         `https://event-backends.onrender.com/api/events/${eventId}/join`,
@@ -218,6 +225,11 @@ const EventDashboard = () => {
       </div>
     );
   }
+
+  const redirectToLogin = () => {
+    // Redirecting to the login page (adjust path as needed)
+    history.push("/login"); // or use window.location.href if not using react-router
+  };
 
   return (
     <>
@@ -431,20 +443,26 @@ const EventDashboard = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Guest Modal */}
-      <Modal show={showLoginPopup} onHide={() => setShowLoginPopup(false)}>
+      <Modal
+        show={showLoginPopup}
+        onHide={() => setShowLoginPopup(false)}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>Login Required</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>You must log in to join an event.</p>
+          <p>
+            You must log in to join this event. Please click "OK" to go to the
+            login page and continue.
+          </p>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowLoginPopup(false)}>
             Close
           </Button>
-          <Button variant="primary" onClick={() => {}}>
-            Log In
+          <Button variant="primary" onClick={redirectToLogin}>
+            OK
           </Button>
         </Modal.Footer>
       </Modal>
