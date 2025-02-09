@@ -22,7 +22,7 @@ import { fetchUserData, setGuestUser } from "../../redux/auth/authSlice";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import io from "socket.io-client";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 
 const EventDashboard = () => {
   const navigate = useNavigate();
@@ -167,56 +167,54 @@ const EventDashboard = () => {
 
   // You can add this code inside your root component or useEffect for checking on app load
 
-useEffect(() => {
-  const storedUser = localStorage.getItem("user");
-  
-  if (storedUser) {
-    const user = JSON.parse(storedUser); 
-    dispatch(setGuestUser(user)); 
-  }
-}, [dispatch]);
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
 
-
-const handleJoinEvent = async (eventId) => {
-  // Check if the user is logged in
-  if (!user) {
-    setShowLoginPopup(true); // Show login popup if no user is logged in
-    return;
-  }
-
-  // If the user is a guest, show the login popup and prevent API call
-  if (user.role === "guest") {
-    setShowLoginPopup(true); // Show login popup if the user is a guest
-    return;
-  }
-
-  // If the login popup is open, don't proceed with the API call
-  if (showLoginPopup) {
-    console.log("Login modal is open, preventing API call.");
-    return; // Prevent API call when login modal is open
-  }
-
-  // Proceed with the API call if the user is logged in and not a guest
-  try {
-    const response = await fetch(
-      `https://event-backends.onrender.com/api/events/${eventId}/join`,
-      {
-        method: "POST",
-        credentials: "include", // Include credentials for authenticated users
-      }
-    );
-
-    if (response.ok) {
-      console.log("Event joined successfully!");
-      toast.success("Successfully joined the event!");
-    } else {
-      console.log("Failed to join the event");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      dispatch(setGuestUser(user));
     }
-  } catch (error) {
-    console.error("Error joining event:", error);
-  }
-};
+  }, [dispatch]);
 
+  const handleJoinEvent = async (eventId) => {
+    // Check if the user is logged in
+    if (!user) {
+      setShowLoginPopup(true); // Show login popup if no user is logged in
+      return;
+    }
+
+    // If the user is a guest, show the login popup and prevent API call
+    if (user.role === "guest") {
+      setShowLoginPopup(true); // Show login popup if the user is a guest
+      return;
+    }
+
+    // If the login popup is open, don't proceed with the API call
+    if (showLoginPopup) {
+      console.log("Login modal is open, preventing API call.");
+      return; // Prevent API call when login modal is open
+    }
+
+    // Proceed with the API call if the user is logged in and not a guest
+    try {
+      const response = await fetch(
+        `https://event-backends.onrender.com/api/events/${eventId}/join`,
+        {
+          method: "POST",
+          credentials: "include", // Include credentials for authenticated users
+        }
+      );
+
+      if (response.ok) {
+        console.log("Event joined successfully!");
+        toast.success("Successfully joined the event!");
+      } else {
+        console.log("Failed to join the event");
+      }
+    } catch (error) {
+      console.error("Error joining event:", error);
+    }
+  };
 
   const openDeleteModal = (eventId) => {
     setEventToDelete(eventId);
@@ -246,7 +244,8 @@ const handleJoinEvent = async (eventId) => {
   }
 
   const redirectToLogin = () => {
-    navigate("/"); 
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   return (
