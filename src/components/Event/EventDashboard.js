@@ -22,10 +22,10 @@ import { fetchUserData, setGuestUser } from "../../redux/auth/authSlice";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import io from "socket.io-client";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; 
 
 const EventDashboard = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { events, isLoading } = useSelector((state) => state.events); // Fetch events and loading state from redux
   const { user } = useSelector((state) => state.auth);
@@ -228,7 +228,7 @@ const EventDashboard = () => {
 
   const redirectToLogin = () => {
     // Redirecting to the login page (adjust path as needed)
-    history.push("/login"); // or use window.location.href if not using react-router
+    navigate("/"); // or use window.location.href if not using react-router
   };
 
   return (
