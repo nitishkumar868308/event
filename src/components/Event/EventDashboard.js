@@ -177,37 +177,46 @@ useEffect(() => {
 }, [dispatch]);
 
 
-  const handleJoinEvent = async (eventId) => {
-    // Check if the user is logged in and is a guest
-    if (!user) {
-      setShowLoginPopup(true); // Show login popup if no user is logged in
-      return;
-    }
+const handleJoinEvent = async (eventId) => {
+  // Check if the user is logged in
+  if (!user) {
+    setShowLoginPopup(true); // Show login popup if no user is logged in
+    return;
+  }
 
-    if (showLoginPopup) {
-      console.log("Login modal is open, preventing API call.");
-      return; // Don't call the API if the login modal is open
-    }
+  // If the user is a guest, show the login popup and prevent API call
+  if (user.role === "guest") {
+    setShowLoginPopup(true); // Show login popup if the user is a guest
+    return;
+  }
 
-    try {
-      const response = await fetch(
-        `https://event-backends.onrender.com/api/events/${eventId}/join`,
-        {
-          method: "POST",
-          credentials: "include", // Include credentials for authenticated users
-        }
-      );
+  // If the login popup is open, don't proceed with the API call
+  if (showLoginPopup) {
+    console.log("Login modal is open, preventing API call.");
+    return; // Prevent API call when login modal is open
+  }
 
-      if (response.ok) {
-        console.log("Event joined successfully!");
-        toast.success("Successfully joined the event!");
-      } else {
-        console.log("Failed to join the event");
+  // Proceed with the API call if the user is logged in and not a guest
+  try {
+    const response = await fetch(
+      `https://event-backends.onrender.com/api/events/${eventId}/join`,
+      {
+        method: "POST",
+        credentials: "include", // Include credentials for authenticated users
       }
-    } catch (error) {
-      console.error("Error joining event:", error);
+    );
+
+    if (response.ok) {
+      console.log("Event joined successfully!");
+      toast.success("Successfully joined the event!");
+    } else {
+      console.log("Failed to join the event");
     }
-  };
+  } catch (error) {
+    console.error("Error joining event:", error);
+  }
+};
+
 
   const openDeleteModal = (eventId) => {
     setEventToDelete(eventId);
