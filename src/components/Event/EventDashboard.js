@@ -27,7 +27,8 @@ import axios from "axios";
 const EventDashboard = () => {
   const dispatch = useDispatch();
   const { events, isLoading } = useSelector((state) => state.events); // Fetch events and loading state from redux
-  const { user } = useSelector((state) => state.auth);
+  const { user, isUserLoading } = useSelector((state) => state.auth);
+  console.log("user", user);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -42,7 +43,7 @@ const EventDashboard = () => {
   const [eventToDelete, setEventToDelete] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const socket = io("https://event-backends.onrender.com");
-  console.log("events" , events)
+  console.log("events", events);
   const eventsPerPage = 6;
 
   const today = new Date().setHours(0, 0, 0, 0); // Get today's date at 00:00:00 (midnight)
@@ -166,9 +167,32 @@ const EventDashboard = () => {
     setShowDeleteModal(true);
   };
 
+  console.log("user", user);
+
   return (
     <>
       <ToastContainer />
+
+      {isUserLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            backdropFilter: "blur(5px)",
+          }}
+        >
+          <ClipLoader size={50} color="#00bfff" loading={isUserLoading} />
+        </div>
+      )}
+
       <Button
         variant="success"
         onClick={() => {
@@ -219,13 +243,7 @@ const EventDashboard = () => {
               <Row>
                 {currentEvents.length > 0 ? (
                   currentEvents.map((event) => (
-                
-                    <Col
-                      xs={12}
-                      md={6}
-                      lg={4}
-                      key={event._id}
-                    >
+                    <Col xs={12} md={6} lg={4} key={event._id}>
                       <Card className="mb-4">
                         <Card.Body>
                           <Card.Title>{event.name}</Card.Title>
