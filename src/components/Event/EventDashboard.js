@@ -27,7 +27,7 @@ import axios from "axios";
 const EventDashboard = () => {
   const dispatch = useDispatch();
   const { events, isLoading } = useSelector((state) => state.events); // Fetch events and loading state from redux
-  const { user, isUserLoading } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   console.log("user", user);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
@@ -169,29 +169,31 @@ const EventDashboard = () => {
 
   console.log("user", user);
 
+  if (!user) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "rgba(0, 0, 0, 0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999,
+          backdropFilter: "blur(5px)",
+        }}
+      >
+        <ClipLoader size={50} color="#00bfff" />
+      </div>
+    );
+  }
+
   return (
     <>
       <ToastContainer />
-
-      {isUserLoading && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
-            backdropFilter: "blur(5px)",
-          }}
-        >
-          <ClipLoader size={50} color="#00bfff" loading={isUserLoading} />
-        </div>
-      )}
 
       <Button
         variant="success"
@@ -265,7 +267,7 @@ const EventDashboard = () => {
                             Join Event
                           </Button>
                           {/* Conditionally render edit and delete buttons */}
-                          {event.userId === user.id && (
+                          {user && user.id === event.userId && (
                             <>
                               <Button
                                 variant="warning"
