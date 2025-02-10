@@ -4,21 +4,15 @@ import LoginPage from "../pages/LoginPage";
 import GuestLoginPage from "../pages/GuestLoginPage";
 import DashboardPage from "../pages/DashboardPage";
 import PrivateRoute from "./PrivateRoute";
-// import ProfilePage from '../pages/ProfilePage';
-// import Contact from '../pages/ContactPage';
 
 const AppRoutes = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LoginPage />} />
-        {/* <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/contact" element={<Contact />} /> */}
         <Route path="/guest-login" element={<GuestLoginPage />} />
-        {/* <Route
-          path="/dashboard"
-          element={<PrivateRoute element={<DashboardPage />} />}
-        /> */}
+        
+        {/* PrivateRoute wrapper for protected routes */}
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
         </Route>
