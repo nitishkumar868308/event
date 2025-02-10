@@ -1,35 +1,17 @@
 import React, { useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchUserData } from "../redux/auth/authSlice"; // Assume you have this action
+import { fetchUserData } from "../redux/auth/authSlice";
 
-const PrivateRoute = ({ element }) => {
+const PrivateRoute = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user); // Access user from Redux store
-  const isLoading = useSelector((state) => state.auth.loading); // To check loading state
-  const error = useSelector((state) => state.auth.error); // Error from Redux store
-  console.log("user", user);
-  useEffect(() => {
-    if (!user && !isLoading && !error) {
-      dispatch(fetchUserData()); // Fetch user data when the component mounts
-    }
-  }, [dispatch, user, isLoading, error]);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    // If token exists in the cookies, trigger the user data fetch after page load
-    const token = document.cookie
-      .split(";")
-      .find((cookie) => cookie.trim().startsWith("token="));
-    if (token && !user && !isLoading) {
-      dispatch(fetchUserData());
-    }
-  }, [dispatch, user, isLoading]);
+    dispatch(fetchUserData());
+  }, []);
 
-  if (!user) {
-    return <Navigate to="/" />; // Redirect to login page if no user
-  }
-
-  return element; // If the user is logged in, render the passed component
+  return user ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default PrivateRoute;

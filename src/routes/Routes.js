@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import GuestLoginPage from "../pages/GuestLoginPage";
 import DashboardPage from "../pages/DashboardPage";
-// import PrivateRoute from "./PrivateRoute";
+import PrivateRoute from "./PrivateRoute";
 // import ProfilePage from '../pages/ProfilePage';
 // import Contact from '../pages/ContactPage';
 
@@ -19,7 +19,9 @@ const AppRoutes = () => {
           path="/dashboard"
           element={<PrivateRoute element={<DashboardPage />} />}
         /> */}
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<PrivateRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
       </Routes>
     </Router>
   );
